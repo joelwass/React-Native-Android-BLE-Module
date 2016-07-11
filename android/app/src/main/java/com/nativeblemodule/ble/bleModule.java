@@ -103,37 +103,17 @@ public class bleModule extends ReactContextBaseJavaModule {
             switch (newState) {
                 case 0:
                     // connected
-//                    MainActivity.this.runOnUiThread(new Runnable() {
-//                        public void run() {
-//                            peripheralTextView.append("device disconnected\n");
-//                            connectToDevice.setVisibility(View.VISIBLE);
-//                            disconnectDevice.setVisibility(View.INVISIBLE);
-//                        }
-//                    });
                     getReactApplicationContext()
                             .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                             .emit("DeviceStateChanged", "0 connected");
                     break;
                 case 2:
                     // disconnected
-
-//                    MainActivity.this.runOnUiThread(new Runnable() {
-//                        public void run() {
-//                            peripheralTextView.append("device connected\n");
-//                            connectToDevice.setVisibility(View.INVISIBLE);
-//                            disconnectDevice.setVisibility(View.VISIBLE);
-//                        }
-//                    });
                     getReactApplicationContext()
                             .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                             .emit("DeviceStateChanged", "2, disconnected");
                     break;
                 default:
-//                    MainActivity.this.runOnUiThread(new Runnable() {
-//                        public void run() {
-//                            peripheralTextView.append("we encounterned an unknown state, uh oh\n");
-//                        }
-//                    });
                     getReactApplicationContext()
                             .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                             .emit("DeviceStateChanged", "default: shouldn't be hitting");
@@ -145,11 +125,6 @@ public class bleModule extends ReactContextBaseJavaModule {
         public void onServicesDiscovered(final BluetoothGatt gatt, final int status) {
             // this will get called after the client initiates a BluetoothGatt.discoverServices() call
 
-//            MainActivity.this.runOnUiThread(new Runnable() {
-//                public void run() {
-//                    peripheralTextView.append("device services have been discovered\n");
-//                }
-//            });
         }
     };
 
@@ -160,10 +135,6 @@ public class bleModule extends ReactContextBaseJavaModule {
         btCurrentState = "scanning";
         deviceIndex = 0;
         devicesDiscovered.clear();
-//        peripheralTextView.setText("");
-//        peripheralTextView.append("Started Scanning\n");
-//        startScanningButton.setVisibility(View.INVISIBLE);
-//        stopScanningButton.setVisibility(View.VISIBLE);
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
@@ -176,10 +147,7 @@ public class bleModule extends ReactContextBaseJavaModule {
     public void stopScanning() {
         System.out.println("stopping scanning");
         btCurrentState = "stopped scanning";
-//        peripheralTextView.append("Stopped Scanning\n");
         btScanning = false;
-//        startScanningButton.setVisibility(View.VISIBLE);
-//        stopScanningButton.setVisibility(View.INVISIBLE);
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
