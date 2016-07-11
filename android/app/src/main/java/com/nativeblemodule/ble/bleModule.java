@@ -1,21 +1,40 @@
 package com.nativeblemodule.ble;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.telecom.Call;
+import android.view.View;
 import android.widget.AbsListView;
 
+import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.nativeblemodule.MainActivity;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
@@ -25,80 +44,23 @@ import java.util.Set;
  */
 public class bleModule extends ReactContextBaseJavaModule {
 
-    private AbsListView mListView;
-    final Set<BluetoothDevice> peripheralList = new Set<BluetoothDevice>() {
-        @Override
-        public boolean add(BluetoothDevice object) {
-            return false;
-        }
 
-        @Override
-        public boolean addAll(Collection<? extends BluetoothDevice> collection) {
-            return false;
-        }
-
-        @Override
-        public void clear() {
-
-        }
-
-        @Override
-        public boolean contains(Object object) {
-            return false;
-        }
-
-        @Override
-        public boolean containsAll(Collection<?> collection) {
-            return false;
-        }
-
-        @Override
-        public boolean isEmpty() {
-            return false;
-        }
-
-        @NonNull
-        @Override
-        public Iterator<BluetoothDevice> iterator() {
-            return null;
-        }
-
-        @Override
-        public boolean remove(Object object) {
-            return false;
-        }
-
-        @Override
-        public boolean removeAll(Collection<?> collection) {
-            return false;
-        }
-
-        @Override
-        public boolean retainAll(Collection<?> collection) {
-            return false;
-        }
-
-        @Override
-        public int size() {
-            return 0;
-        }
-
-        @NonNull
-        @Override
-        public Object[] toArray() {
-            return new Object[0];
-        }
-
-        @NonNull
-        @Override
-        public <T> T[] toArray(T[] array) {
-            return null;
-        }
-    };
-    private static BluetoothAdapter bTAdapter;
+    public BluetoothManager btManager;
+    public BluetoothAdapter btAdapter;
+    public BluetoothLeScanner btScanner;
+    private final static int REQUEST_ENABLE_BT = 1;
+    ArrayList<BluetoothDevice> devicesDiscovered = new ArrayList<BluetoothDevice>();
+    BluetoothGatt bluetoothGatt;
+    Boolean btScanning = false;
+    int deviceIndex = 0;
+    String btCurrentState = "nothing has happened";
 
     public bleModule(ReactApplicationContext reactContext) {
         super(reactContext);
+
+        btManager = (BluetoothManager)getReactApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE);
+        btAdapter = btManager.getAdapter();
+        btScanner = btAdapter.getBluetoothLeScanner();
     }
 
     @Override
@@ -106,33 +68,146 @@ public class bleModule extends ReactContextBaseJavaModule {
         return "BLE";
     }
 
-    private final BroadcastReceiver bReciever = new BroadcastReceiver() {
+    // Device scan callback.
+    private ScanCallback leScanCallback = new ScanCallback() {
         @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                peripheralList.add(device);
+        public void onScanResult(int callbackType, ScanResult result) {
+
+            devicesDiscovered.add(result.getDevice());
+            deviceIndex++;
+
+            getReactApplicationContext()
+                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                    .emit("DeviceDiscovered", deviceIndex + ": " + result.getDevice().getName());
+
+        }
+    };
+
+    // Device connect call back
+    private final BluetoothGattCallback btleGattCallback = new BluetoothGattCallback() {
+
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic) {
+            // this will get called anytime you perform a read or write characteristic operation
+//            MainActivity.this.runOnUiThread(new Runnable() {
+//                public void run() {
+//                    peripheralTextView.append("device read or wrote to\n");
+//                }
+//            });
+        }
+
+        @Override
+        public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
+            // this will get called when a device connects or disconnects
+            System.out.println(newState);
+            switch (newState) {
+                case 0:
+                    // connected
+//                    MainActivity.this.runOnUiThread(new Runnable() {
+//                        public void run() {
+//                            peripheralTextView.append("device disconnected\n");
+//                            connectToDevice.setVisibility(View.VISIBLE);
+//                            disconnectDevice.setVisibility(View.INVISIBLE);
+//                        }
+//                    });
+                    getReactApplicationContext()
+                            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                            .emit("DeviceStateChanged", "0 connected");
+                    break;
+                case 2:
+                    // disconnected
+
+//                    MainActivity.this.runOnUiThread(new Runnable() {
+//                        public void run() {
+//                            peripheralTextView.append("device connected\n");
+//                            connectToDevice.setVisibility(View.INVISIBLE);
+//                            disconnectDevice.setVisibility(View.VISIBLE);
+//                        }
+//                    });
+                    getReactApplicationContext()
+                            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                            .emit("DeviceStateChanged", "2, disconnected");
+                    break;
+                default:
+//                    MainActivity.this.runOnUiThread(new Runnable() {
+//                        public void run() {
+//                            peripheralTextView.append("we encounterned an unknown state, uh oh\n");
+//                        }
+//                    });
+                    getReactApplicationContext()
+                            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                            .emit("DeviceStateChanged", "default: shouldn't be hitting");
+                    break;
             }
+        }
+
+        @Override
+        public void onServicesDiscovered(final BluetoothGatt gatt, final int status) {
+            // this will get called after the client initiates a BluetoothGatt.discoverServices() call
+
+//            MainActivity.this.runOnUiThread(new Runnable() {
+//                public void run() {
+//                    peripheralTextView.append("device services have been discovered\n");
+//                }
+//            });
         }
     };
 
     @ReactMethod
     public void startScanning() {
-        bTAdapter = BluetoothAdapter.getDefaultAdapter();
-        peripheralList.clear();
-        //registerReceiver(bReciever, new IntentFilter(BluetoothDevice.ACTION_FOUND));
-        bTAdapter.startDiscovery();
-    }
-
-    @ReactMethod
-    public Set<BluetoothDevice> getDevices() {
-        return peripheralList;
+        System.out.println("start scanning");
+        btScanning = true;
+        btCurrentState = "scanning";
+        deviceIndex = 0;
+        devicesDiscovered.clear();
+//        peripheralTextView.setText("");
+//        peripheralTextView.append("Started Scanning\n");
+//        startScanningButton.setVisibility(View.INVISIBLE);
+//        stopScanningButton.setVisibility(View.VISIBLE);
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                btScanner.startScan(leScanCallback);
+            }
+        });
     }
 
     @ReactMethod
     public void stopScanning() {
-        peripheralList.clear();
-        bTAdapter.cancelDiscovery();
+        System.out.println("stopping scanning");
+        btCurrentState = "stopped scanning";
+//        peripheralTextView.append("Stopped Scanning\n");
+        btScanning = false;
+//        startScanningButton.setVisibility(View.VISIBLE);
+//        stopScanningButton.setVisibility(View.INVISIBLE);
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                btScanner.stopScan(leScanCallback);
+            }
+        });
     }
+
+    @ReactMethod
+    public void getState(Callback intCallback) {
+        String _getState = btCurrentState;
+        intCallback.invoke(_getState);
+    }
+
+    @ReactMethod
+    public void getDevices(Callback setCallback) {
+        setCallback.invoke(devicesDiscovered.get(0).getName());
+    }
+
+    public void connectToDeviceSelected() {
+        //peripheralTextView.append("Trying to connect to device at index: " + deviceIndexInput.getText() + "\n");
+        //int deviceSelected = Integer.parseInt(deviceIndexInput.getText().toString());
+        //bluetoothGatt = devicesDiscovered.get(deviceSelected).connectGatt(this, false, btleGattCallback);
+    }
+
+    public void disconnectDeviceSelected() {
+        //peripheralTextView.append("Disconnecting from device\n");
+        bluetoothGatt.disconnect();
+    }
+
 }

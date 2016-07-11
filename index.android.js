@@ -12,9 +12,15 @@ import {
   Text,
   View,
   NativeModules,
+  DeviceEventEmitter,
 } from 'react-native';
 
 class nativeBLEModule extends Component {
+
+  componentDidMount() {
+    DeviceEventEmitter.addListener('DeviceDiscovered', (result) => console.log(result));
+    DeviceEventEmitter.addListener('DeviceStateChanged', (stateChange) => console.log(stateChange));
+  }
 
   _startScanning() {
     console.log("RN start scanning tapped");
@@ -23,7 +29,7 @@ class nativeBLEModule extends Component {
 
   _viewPeripherals() {
     console.log("RN Viewing peripherals");
-    console.log(NativeModules.BLE.getDevices());
+    NativeModules.BLE.getState((status) => {console.log('current bt adaptor state: ', status)});
   }
 
   _stopScanning() {
