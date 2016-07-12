@@ -30,6 +30,7 @@ class nativeBLEModule extends Component {
     this._connectToDevice = this._connectToDevice.bind(this);
     this._disconnectFromDevice = this._disconnectFromDevice.bind(this);
     this._discoverServices = this._discoverServices.bind(this);
+    this.updateTextView = this.updateTextView.bind(this);
   }
 
   componentDidMount() {
@@ -45,25 +46,25 @@ class nativeBLEModule extends Component {
 
   _stopScanning() {
     console.log("RN stop scanning");
-    updateTextView("Stopped Scanning \n");
+    this.updateTextView("Stopped Scanning \n");
     NativeModules.BLE.stopScanning();
   }
 
   _connectToDevice() {
     console.log("trying to connect to device " + this.state.deviceIndex);
-    updateTextView("Connecting to device: " + this.state.deviceIndex + "\n");
+    this.updateTextView("Connecting to device: " + this.state.deviceIndex + "\n");
     NativeModules.BLE.connectToDeviceSelected(this.state.deviceIndex);
   }
 
   _disconnectFromDevice() {
     console.log("trying to disconnect from device");
-    updateTextView("Disconnecting from device\n");
+    this.updateTextView("Disconnecting from device\n");
     NativeModules.BLE.disconnectDeviceSelected();
   }
 
   _discoverServices() {
     console.log("trying to discover services");
-    updateTextView("Trying to discover services\n");
+    this.updateTextView("Trying to discover services\n");
   }
 
   updateTextView(text) {
