@@ -74,12 +74,11 @@ public class bleModule extends ReactContextBaseJavaModule {
         public void onScanResult(int callbackType, ScanResult result) {
 
             devicesDiscovered.add(result.getDevice());
-            deviceIndex++;
-
             getReactApplicationContext()
                     .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                     .emit("DeviceDiscovered", deviceIndex + ": " + result.getDevice().getName());
 
+            deviceIndex++;
         }
     };
 
@@ -105,13 +104,13 @@ public class bleModule extends ReactContextBaseJavaModule {
                     // connected
                     getReactApplicationContext()
                             .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                            .emit("DeviceStateChanged", "0 connected");
+                            .emit("DeviceStateChanged", "0, disconnected");
                     break;
                 case 2:
                     // disconnected
                     getReactApplicationContext()
                             .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                            .emit("DeviceStateChanged", "2, disconnected");
+                            .emit("DeviceStateChanged", "2, connected");
                     break;
                 default:
                     getReactApplicationContext()
@@ -167,12 +166,13 @@ public class bleModule extends ReactContextBaseJavaModule {
         setCallback.invoke(devicesDiscovered.get(0).getName());
     }
 
-    public void connectToDeviceSelected() {
-        //peripheralTextView.append("Trying to connect to device at index: " + deviceIndexInput.getText() + "\n");
-        //int deviceSelected = Integer.parseInt(deviceIndexInput.getText().toString());
-        //bluetoothGatt = devicesDiscovered.get(deviceSelected).connectGatt(this, false, btleGattCallback);
+    @ReactMethod
+    public void connectToDeviceSelected(String deviceIndex) {
+        int deviceSelected = Integer.parseInt(deviceIndex);
+        bluetoothGatt = devicesDiscovered.get(deviceSelected).connectGatt(getReactApplicationContext(), false, btleGattCallback);
     }
 
+    @ReactMethod
     public void disconnectDeviceSelected() {
         //peripheralTextView.append("Disconnecting from device\n");
         bluetoothGatt.disconnect();

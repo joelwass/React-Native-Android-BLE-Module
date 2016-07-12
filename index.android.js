@@ -28,11 +28,12 @@ class nativeBLEModule extends Component {
     this._startScanning = this._startScanning.bind(this);
     this._stopScanning = this._stopScanning.bind(this);
     this._connectToDevice = this._connectToDevice.bind(this);
+    this._disconnectFromDevice = this._disconnectFromDevice.bind(this);
   }
 
   componentDidMount() {
     DeviceEventEmitter.addListener('DeviceDiscovered', (result) => {this.setState({peripheralsText: this.state.peripheralsText + result + "\n"})});
-    DeviceEventEmitter.addListener('DeviceStateChanged', (stateChange) => console.log(stateChange));
+    DeviceEventEmitter.addListener('DeviceStateChanged', (stateChange) => {this.setState({peripheralsText: this.state.peripheralsText + "State Changed: " + stateChange + "\n"})});
   }
 
   _startScanning() {
@@ -48,8 +49,15 @@ class nativeBLEModule extends Component {
   }
 
   _connectToDevice() {
-    console.log("trying to connect to device" + this.state.deviceIndex);
-    
+    console.log("trying to connect to device " + this.state.deviceIndex);
+    this.setState({peripheralsText: this.state.peripheralsText + "Connecting to device: " + this.state.deviceIndex + "\n"});
+    NativeModules.BLE.connectToDeviceSelected(this.state.deviceIndex);
+  }
+
+  _disconnectFromDevice() {
+    console.log("trying to disconnect from device");
+    this.setState({peripheralsText: this.state.peripheralsText + "Disconnecting from device"});
+    NativeModules.BLE.disconnectDeviceSelected();
   }
 
   render() {
@@ -76,7 +84,8 @@ class nativeBLEModule extends Component {
 
         <TextInput
         style={styles.deviceIndexInput}
-        onChangeText={(text) => this.setState({deviceIndex})}
+        keyboardType={'numeric'}
+        onChangeText={(text) => this.setState({deviceIndex: text})}
         value={this.state.deviceIndex} 
         />
 
@@ -89,8 +98,17 @@ class nativeBLEModule extends Component {
           </Text>
         </TouchableHighlight>
 
+        <TouchableHighlight
+        style={styles.button}
+        underlayColor={'grey'}
+        onPress={this._disconnectFromDevice}>
+          <Text>
+            Disconnect from device
+          </Text>
+        </TouchableHighlight>
+
         <Text style={styles.welcome}>
-          Welcome to React Native!
+          Peripherals in this area
         </Text>
 
         <ScrollView 
