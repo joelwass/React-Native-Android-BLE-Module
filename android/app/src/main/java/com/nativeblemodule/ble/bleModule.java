@@ -123,7 +123,7 @@ public class bleModule extends ReactContextBaseJavaModule {
         @Override
         public void onServicesDiscovered(final BluetoothGatt gatt, final int status) {
             // this will get called after the client initiates a BluetoothGatt.discoverServices() call
-
+            
         }
     };
 
