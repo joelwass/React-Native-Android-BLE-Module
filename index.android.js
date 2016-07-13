@@ -36,6 +36,10 @@ class nativeBLEModule extends Component {
   componentDidMount() {
     DeviceEventEmitter.addListener('DeviceDiscovered', (result) => {this.setState({peripheralsText: this.state.peripheralsText + result + "\n"})});
     DeviceEventEmitter.addListener('DeviceStateChanged', (stateChange) => {this.setState({peripheralsText: this.state.peripheralsText + "State Changed: " + stateChange + "\n"})});
+    DeviceEventEmitter.addListener('Event', (eventDescription) => {this.setState({peripheralsText: this.state.peripheralsText + eventDescription + "\n"})});
+    DeviceEventEmitter.addListener('WordCount', (wordCount) => {this.setState({peripheralsText: this.state.peripheralsText + "Word Count: " + wordCount + "\n"})});
+    DeviceEventEmitter.addListener('ServiceDiscovered', (serviceDiscovered) => {this.setState({peripheralsText: this.state.peripheralsText + "Service Discovered: " + serviceDiscovered + "\n"})});
+    DeviceEventEmitter.addListener('CharacteristicDiscovered', (character) => {this.setState({peripheralsText: this.state.peripheralsText + "Characteristic Discovered: " + CharacteristicDiscovered + "\n"})});
   }
 
   _startScanning() {
