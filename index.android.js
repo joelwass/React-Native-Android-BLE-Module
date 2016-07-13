@@ -23,79 +23,104 @@ class nativeBLEModule extends Component {
     super(props);
     this.state = {
       deviceIndex: '0',
-      peripheralsText: 'press start scan to start scanning\n',
+      textViewText: 'press start scan to start scanning\n',
     };
     this._startScanning = this._startScanning.bind(this);
     this._stopScanning = this._stopScanning.bind(this);
     this._connectToDevice = this._connectToDevice.bind(this);
     this._disconnectFromDevice = this._disconnectFromDevice.bind(this);
-    this._discoverServices = this._discoverServices.bind(this);
+    this._readWordCount = this._readWordCount.bind(this);
+    this._subscribeWordCount = this._subscribeWordCount.bind(this);
     this.updateTextView = this.updateTextView.bind(this);
   }
 
   componentDidMount() {
-    DeviceEventEmitter.addListener('DeviceDiscovered', (result) => {this.setState({peripheralsText: this.state.peripheralsText + result + "\n"})});
-    DeviceEventEmitter.addListener('DeviceStateChanged', (stateChange) => {this.setState({peripheralsText: this.state.peripheralsText + "State Changed: " + stateChange + "\n"})});
-    DeviceEventEmitter.addListener('Event', (eventDescription) => {this.setState({peripheralsText: this.state.peripheralsText + eventDescription + "\n"})});
-    DeviceEventEmitter.addListener('WordCount', (wordCount) => {this.setState({peripheralsText: this.state.peripheralsText + "Word Count: " + wordCount + "\n"})});
-    DeviceEventEmitter.addListener('ServiceDiscovered', (serviceDiscovered) => {this.setState({peripheralsText: this.state.peripheralsText + "Service Discovered: " + serviceDiscovered + "\n"})});
-    DeviceEventEmitter.addListener('CharacteristicDiscovered', (character) => {this.setState({peripheralsText: this.state.peripheralsText + "Characteristic Discovered: " + CharacteristicDiscovered + "\n"})});
+    DeviceEventEmitter.addListener('DeviceDiscovered', (result) => {this.setState({textViewText: this.state.textViewText + result + "\n"})});
+    DeviceEventEmitter.addListener('DeviceStateChanged', (stateChange) => {this.setState({textViewText: this.state.textViewText + "State Changed: " + stateChange + "\n"})});
+    DeviceEventEmitter.addListener('Event', (eventDescription) => {this.setState({textViewText: this.state.textViewText + eventDescription + "\n"})});
+    DeviceEventEmitter.addListener('WordCount', (wordCount) => {this.setState({textViewText: this.state.textViewText + "Word Count: " + wordCount + "\n"})});
+    DeviceEventEmitter.addListener('ServiceDiscovered', (serviceDiscovered) => {this.setState({textViewText: this.state.textViewText + "Service Discovered: " + serviceDiscovered + "\n"})});
+    DeviceEventEmitter.addListener('CharacteristicDiscovered', (characteristicDiscovered) => {this.setState({textViewText: this.state.textViewText + "Characteristic Discovered: " + characteristicDiscovered + "\n"})});
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.timer);
   }
 
   _startScanning() {
-    console.log("RN start scanning tapped");
-    this.setState({peripheralsText: "Started Scanning \n"});
     NativeModules.BLE.startScanning();
+
+    this.timer = setTimeout(() => {
+      console.log('I do not leak!');
+    }, 5000);
   }
 
   _stopScanning() {
-    console.log("RN stop scanning");
-    this.updateTextView("Stopped Scanning \n");
     NativeModules.BLE.stopScanning();
   }
 
   _connectToDevice() {
-    console.log("trying to connect to device " + this.state.deviceIndex);
     this.updateTextView("Connecting to device: " + this.state.deviceIndex + "\n");
     NativeModules.BLE.connectToDeviceSelected(this.state.deviceIndex);
   }
 
   _disconnectFromDevice() {
-    console.log("trying to disconnect from device");
     this.updateTextView("Disconnecting from device\n");
     NativeModules.BLE.disconnectDeviceSelected();
   }
 
-  _discoverServices() {
-    console.log("trying to discover services");
-    this.updateTextView("Trying to discover services\n");
+  _readWordCount() {
+    NativeModules.BLE.readWordCount();
+  }
+
+  _subscribeWordCount() {
+    NativeModules.BLE.subscribeToWordCount();
   }
 
   updateTextView(text) {
-    this.setState({peripheralsText: this.state.peripheralsText + text});
+    this.setState({textViewText: this.state.textViewText + text});
   }
 
   render() {
     return (
       <View style={styles.container}>
+        <View style={styles.buttonContainer}>
+          <TouchableHighlight 
+          style={styles.button}
+          underlayColor={'grey'}
+          onPress={this._startScanning}>
+            <Text>
+              Start Scanning
+            </Text>
+          </TouchableHighlight>
 
-        <TouchableHighlight 
-        style={styles.button}
-        underlayColor={'grey'}
-        onPress={this._startScanning}>
-          <Text>
-            Start Scanning
-          </Text>
-        </TouchableHighlight>
+          <TouchableHighlight 
+          style={styles.button}
+          underlayColor={'grey'}
+          onPress={this._stopScanning}>
+            <Text>
+              Stop Scanning
+            </Text>
+          </TouchableHighlight>
 
-        <TouchableHighlight 
-        style={styles.button}
-        underlayColor={'grey'}
-        onPress={this._stopScanning}>
-          <Text>
-            Stop Scanning
-          </Text>
-        </TouchableHighlight>
+          <TouchableHighlight
+          style={styles.button}
+          underlayColor={'grey'}
+          onPress={this._disconnectFromDevice}>
+            <Text>
+              Disconnect from device
+            </Text>
+          </TouchableHighlight>
+        </View>
+
+        <TouchableHighlight
+          style={styles.button}
+          underlayColor={'grey'}
+          onPress={this._connectToDevice}>
+            <Text>
+              Connect To Device With Index:
+            </Text>
+          </TouchableHighlight>
 
         <TextInput
         style={styles.deviceIndexInput}
@@ -104,23 +129,25 @@ class nativeBLEModule extends Component {
         value={this.state.deviceIndex} 
         />
 
-        <TouchableHighlight
-        style={styles.button}
-        underlayColor={'grey'}
-        onPress={this._connectToDevice}>
-          <Text>
-            Connect To Device With Index
-          </Text>
-        </TouchableHighlight>
+        <View style={styles.buttonContainer}>
+          <TouchableHighlight 
+          style={styles.button}
+          underlayColor={'grey'}
+          onPress={this._readWordCount}>
+            <Text>
+              Word Count
+            </Text>
+          </TouchableHighlight>
 
-        <TouchableHighlight
-        style={styles.button}
-        underlayColor={'grey'}
-        onPress={this._disconnectFromDevice}>
-          <Text>
-            Disconnect from device
-          </Text>
-        </TouchableHighlight>
+          <TouchableHighlight
+          style={styles.button}
+          underlayColor={'grey'}
+          onPress={this._subscribeWordCount}>
+            <Text>
+              Subscribe Word Count
+            </Text>
+          </TouchableHighlight>
+        </View>
 
         <Text style={styles.welcome}>
           Peripherals in this area
@@ -131,8 +158,8 @@ class nativeBLEModule extends Component {
         style={styles.peripheralContainer}
         onContentSizeChange={(width, height) => {this.refs.scrollView.scrollTo({y: height})}}>
           <Text
-          style={styles.peripheralsText}>
-          {this.state.peripheralsText}
+          style={styles.textViewText}>
+          {this.state.textViewText}
           </Text>
         </ScrollView>
 
@@ -153,7 +180,11 @@ const styles = StyleSheet.create({
     borderStyle: 'solid',
     backgroundColor: 'lavender',
   },
-  peripheralsText: {
+  buttonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  textViewText: {
     alignItems: 'center',
     paddingBottom: 20,
   },
@@ -172,6 +203,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
     paddingVertical: 10,
+    marginHorizontal: 2,
   },
   welcome: {
     fontSize: 20,

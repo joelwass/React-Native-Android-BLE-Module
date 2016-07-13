@@ -241,6 +241,7 @@ public class bleModule extends ReactContextBaseJavaModule {
                 getReactApplicationContext()
                         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                         .emit("CharacteristicDiscovered", uuids.get(charUuid.toUpperCase()));
+                characteristics.put(charUuid.toUpperCase(), gattCharacteristic);
             }
         }
     }
@@ -256,20 +257,27 @@ public class bleModule extends ReactContextBaseJavaModule {
         //peripheralTextView.append("Disconnecting from device\n");
         bluetoothGatt.disconnect();
     }
-    
+
+    @ReactMethod
     public void readWordCount() {
         if (btAdapter == null || bluetoothGatt == null) {
             System.out.println("BluetoothAdapter not initialized");
             return;
         }
+        getReactApplicationContext()
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit("Event", "Reading Word Count");
+        // replace with characteristic uuid you're trying to read
         bluetoothGatt.readCharacteristic(characteristics.get("EA540021-7D58-4E4B-A451-4BDD68DFE056"));
     }
 
+    @ReactMethod
     public void subscribeToWordCount() {
         getReactApplicationContext()
                 .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                 .emit("Event", "Subscribing to word count");
 
+        // replace with characteristic uuid you're trying to subscribe to
         BluetoothGattCharacteristic wordCountUpdate = characteristics.get("EA540021-7D58-4E4B-A451-4BDD68DFE056");
         BluetoothGattDescriptor descriptor = wordCountUpdate.getDescriptor(UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG));
         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
