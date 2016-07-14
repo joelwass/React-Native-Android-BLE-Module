@@ -65,6 +65,7 @@ public class bleModule extends ReactContextBaseJavaModule {
     public final static String ACTION_DATA_AVAILABLE = "com.example.bluetooth.le.ACTION_DATA_AVAILABLE";
     public final static String EXTRA_DATA = "com.example.bluetooth.le.EXTRA_DATA";
     public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
+    public BluetoothDevice firstStarling;
 
     public Map<String, String> uuids = new HashMap<String, String>();
     public Map<String, BluetoothGattCharacteristic> characteristics = new HashMap<String, BluetoothGattCharacteristic>();
@@ -119,6 +120,10 @@ public class bleModule extends ReactContextBaseJavaModule {
                     .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                     .emit("DeviceDiscovered", deviceIndex + ": " + result.getDevice().getName());
 
+            if (result.getDevice().getName() == "Starling") {
+                firstStarling = result.getDevice();
+                stopScanning();
+            }
             deviceIndex++;
         }
     };

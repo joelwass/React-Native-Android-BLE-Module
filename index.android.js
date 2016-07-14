@@ -51,8 +51,8 @@ class nativeBLEModule extends Component {
     NativeModules.BLE.startScanning();
 
     this.timer = setTimeout(() => {
-      console.log('I do not leak!');
-    }, 5000);
+      this._stopScanning();
+    }, 10000);
   }
 
   _stopScanning() {
