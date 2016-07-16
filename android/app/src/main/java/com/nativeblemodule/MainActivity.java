@@ -23,9 +23,6 @@ public class MainActivity extends ReactActivity {
 
     private BluetoothAdapter BTAdapter;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
-    BluetoothManager btManager;
-    BluetoothAdapter btAdapter;
-    BluetoothLeScanner btScanner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -1,8 +1,5 @@
 package com.nativeblemodule.ble;
 
-import android.Manifest;
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -14,37 +11,20 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.telecom.Call;
-import android.view.View;
-import android.widget.AbsListView;
 
-import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
-import com.nativeblemodule.MainActivity;
 
-import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -58,7 +38,6 @@ public class bleModule extends ReactContextBaseJavaModule {
     private final static int REQUEST_ENABLE_BT = 1;
     ArrayList<BluetoothDevice> devicesDiscovered = new ArrayList<BluetoothDevice>();
     BluetoothGatt bluetoothGatt;
-    Boolean btScanning = false;
     int deviceIndex = 0;
     String btCurrentState = "nothing has happened";
 
@@ -197,7 +176,6 @@ public class bleModule extends ReactContextBaseJavaModule {
         getReactApplicationContext()
                 .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                 .emit("Event", "Started Scanning");
-        btScanning = true;
         btCurrentState = "scanning";
         deviceIndex = 0;
         devicesDiscovered.clear();
@@ -215,7 +193,6 @@ public class bleModule extends ReactContextBaseJavaModule {
                 .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                 .emit("Event", "Stopped Scanning");
         btCurrentState = "stopped scanning";
-        btScanning = false;
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
