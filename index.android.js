@@ -31,6 +31,9 @@ class nativeBLEModule extends Component {
     this._disconnectFromDevice = this._disconnectFromDevice.bind(this);
     this._readWordCount = this._readWordCount.bind(this);
     this._subscribeWordCount = this._subscribeWordCount.bind(this);
+    this._writeLEDOn = this._writeLEDOn.bind(this);
+    this._writeLEDOff = this._writeLEDOff.bind(this);
+    this._readLED = this._readLED.bind(this);
     this.updateTextView = this.updateTextView.bind(this);
   }
 
@@ -49,10 +52,6 @@ class nativeBLEModule extends Component {
 
   _startScanning() {
     NativeModules.BLE.startScanning();
-
-    this.timer = setTimeout(() => {
-      this._stopScanning();
-    }, 10000);
   }
 
   _stopScanning() {
@@ -75,6 +74,18 @@ class nativeBLEModule extends Component {
 
   _subscribeWordCount() {
     NativeModules.BLE.subscribeToWordCount();
+  }
+
+  _writeLEDOn() {
+    NativeModules.BLE.writeLEDOn();
+  }
+
+  _writeLEDOff() {
+    NativeModules.BLE.writeLEDOff();
+  }
+
+  _readLED() {
+    NativeModules.BLE.readLED();
   }
 
   updateTextView(text) {
@@ -117,10 +128,10 @@ class nativeBLEModule extends Component {
           style={styles.button}
           underlayColor={'grey'}
           onPress={this._connectToDevice}>
-            <Text>
-              Connect To Device With Index:
-            </Text>
-          </TouchableHighlight>
+          <Text>
+            Connect To Device With Index:
+          </Text>
+        </TouchableHighlight>
 
         <TextInput
         style={styles.deviceIndexInput}
@@ -149,8 +160,37 @@ class nativeBLEModule extends Component {
           </TouchableHighlight>
         </View>
 
+        <View style={styles.buttonContainer}>
+          <TouchableHighlight 
+          style={styles.button}
+          underlayColor={'grey'}
+          onPress={this._writeLEDOn}>
+            <Text>
+              Turn LED On
+            </Text>
+          </TouchableHighlight>
+
+          <TouchableHighlight
+          style={styles.button}
+          underlayColor={'grey'}
+          onPress={this._writeLEDOff}>
+            <Text>
+              Turn LED Off
+            </Text>
+          </TouchableHighlight>
+
+          <TouchableHighlight
+          style={styles.button}
+          underlayColor={'grey'}
+          onPress={this._readLED}>
+            <Text>
+              Read LED
+            </Text>
+          </TouchableHighlight>
+        </View>
+
         <Text style={styles.welcome}>
-          Peripherals in this area
+          Output Log:
         </Text>
 
         <ScrollView 

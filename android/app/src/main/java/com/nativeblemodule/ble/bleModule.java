@@ -39,7 +39,6 @@ public class bleModule extends ReactContextBaseJavaModule {
     ArrayList<BluetoothDevice> devicesDiscovered = new ArrayList<BluetoothDevice>();
     BluetoothGatt bluetoothGatt;
     int deviceIndex = 0;
-    String btCurrentState = "nothing has happened";
 
     public final static String ACTION_DATA_AVAILABLE = "com.example.bluetooth.le.ACTION_DATA_AVAILABLE";
     public final static String EXTRA_DATA = "com.example.bluetooth.le.EXTRA_DATA";
@@ -158,17 +157,25 @@ public class bleModule extends ReactContextBaseJavaModule {
         public void onCharacteristicRead(BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+            } else {
+                getReactApplicationContext()
+                        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                        .emit("Event", "Something went wrong");
             }
         }
     };
 
-    private void broadcastUpdate(final String action,
-                                 final BluetoothGattCharacteristic characteristic) {
-
-        final int count = ByteBuffer.wrap(characteristic.getValue()).order(ByteOrder.LITTLE_ENDIAN).getInt();
-        getReactApplicationContext()
-                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                .emit("WordCount", count);
+    private void broadcastUpdate(final String action, final BluetoothGattCharacteristic characteristic) {
+        if (characteristic == characteristics.get("EA540021-7D58-4E4B-A451-4BDD68DFE056")) {
+            final int count = ByteBuffer.wrap(characteristic.getValue()).order(ByteOrder.LITTLE_ENDIAN).getInt();
+            getReactApplicationContext()
+                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                    .emit("WordCount", count);
+        } else {
+            getReactApplicationContext()
+                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                    .emit("Event", "Characteristic read");
+        }
     }
 
     @ReactMethod
@@ -176,7 +183,6 @@ public class bleModule extends ReactContextBaseJavaModule {
         getReactApplicationContext()
                 .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                 .emit("Event", "Started Scanning");
-        btCurrentState = "scanning";
         deviceIndex = 0;
         devicesDiscovered.clear();
         AsyncTask.execute(new Runnable() {
@@ -192,13 +198,47 @@ public class bleModule extends ReactContextBaseJavaModule {
         getReactApplicationContext()
                 .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                 .emit("Event", "Stopped Scanning");
-        btCurrentState = "stopped scanning";
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
                 btScanner.stopScan(leScanCallback);
             }
         });
+    }
+
+    @ReactMethod
+    public void writeLEDOn() {
+        getReactApplicationContext()
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit("Event", "turn starling led on");
+
+        byte[] value = new byte[1];
+        value[0] = (byte) (1 & 0xFF);
+        BluetoothGattCharacteristic enableLEDCharacteristic = characteristics.get("EA540019-7D58-4E4B-A451-4BDD68DFE056");
+        enableLEDCharacteristic.setValue(value);
+        bluetoothGatt.writeCharacteristic(enableLEDCharacteristic);
+    }
+
+    @ReactMethod
+    public void writeLEDOff() {
+        getReactApplicationContext()
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit("Event", "turn starling led off");
+
+        byte[] value = new byte[1];
+        value[0] = (byte) (0 & 0xFF);
+        BluetoothGattCharacteristic enableLEDCharacteristic = characteristics.get("EA540019-7D58-4E4B-A451-4BDD68DFE056");
+        enableLEDCharacteristic.setValue(value);
+        bluetoothGatt.writeCharacteristic(enableLEDCharacteristic);
+    }
+
+    @ReactMethod
+    public void readLED() {
+        getReactApplicationContext()
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit("Event", "Reading LED value");
+
+        bluetoothGatt.readCharacteristic(characteristics.get("EA540019-7D58-4E4B-A451-4BDD68DFE056"));
     }
 
     private void displayGattServices(List<BluetoothGattService> gattServices) {
@@ -222,7 +262,7 @@ public class bleModule extends ReactContextBaseJavaModule {
                 final String charUuid = gattCharacteristic.getUuid().toString();
                 getReactApplicationContext()
                         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit("CharacteristicDiscovered", uuids.get(charUuid.toUpperCase()));
+                        .emit("CharacteristicDiscovered", charUuid.toUpperCase());
                 characteristics.put(charUuid.toUpperCase(), gattCharacteristic);
             }
         }
@@ -266,5 +306,17 @@ public class bleModule extends ReactContextBaseJavaModule {
         Boolean status = bluetoothGatt.writeDescriptor(descriptor);
         System.out.println(status);
         bluetoothGatt.setCharacteristicNotification(wordCountUpdate, true);
+    }
+
+    // helper int to bytes method for writing values
+    byte[] toBytes(int i) {
+        byte[] result = new byte[4];
+
+        result[0] = (byte) (i >> 24);
+        result[1] = (byte) (i >> 16);
+        result[2] = (byte) (i >> 8);
+        result[3] = (byte) (i /*>> 0*/);
+
+        return result;
     }
 }
